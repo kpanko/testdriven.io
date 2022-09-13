@@ -1,4 +1,7 @@
+from unittest import mock
+
 import requests
+from requests import Response
 
 
 def get_my_ip():
@@ -10,19 +13,13 @@ def get_my_ip():
 
 def test_get_my_ip(monkeypatch):
     my_ip = '123.123.123.123'
-
-    class MockResponse:
-
-        def __init__(self, json_body):
-            self.json_body = json_body
-
-        def json(self):
-            return self.json_body
+    response = mock.create_autospec(Response)
+    response.json.return_value = {'ip': my_ip}
 
     monkeypatch.setattr(
         requests,
         'get',
-        lambda *args, **kwargs: MockResponse({'ip': my_ip})
+        lambda *args, **kwargs: response
     )
 
     assert get_my_ip() == my_ip
