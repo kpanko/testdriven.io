@@ -1,3 +1,4 @@
+from contextlib import closing
 import os
 import sqlite3
 import uuid
@@ -18,72 +19,74 @@ class Article(BaseModel):
 
     @classmethod
     def get_by_id(cls, article_id: str):
-        con = sqlite3.connect(os.getenv("DATABASE_NAME", "database.db"))
-        con.row_factory = sqlite3.Row
+        with closing(sqlite3.connect(
+                os.getenv("DATABASE_NAME", "database.db"))) as con:
 
-        cur = con.cursor()
-        cur.execute("SELECT * FROM articles WHERE id=?", (article_id,))
+            con.row_factory = sqlite3.Row
 
-        record = cur.fetchone()
+            with closing(con.cursor()) as cur:
+                cur.execute("SELECT * FROM articles WHERE id=?", (article_id,))
 
-        if record is None:
-            raise NotFound
+                record = cur.fetchone()
 
-        article = cls(**record)  # Row can be unpacked as dict
-        con.close()
+                if record is None:
+                    raise NotFound
 
-        return article
+                article = cls(**record)  # Row can be unpacked as dict
+
+                return article
 
     @classmethod
     def get_by_title(cls, title: str):
-        con = sqlite3.connect(os.getenv("DATABASE_NAME", "database.db"))
-        con.row_factory = sqlite3.Row
+        with closing(sqlite3.connect(
+                os.getenv("DATABASE_NAME", "database.db"))) as con:
 
-        cur = con.cursor()
-        cur.execute("SELECT * FROM articles WHERE title = ?", (title,))
+            con.row_factory = sqlite3.Row
 
-        record = cur.fetchone()
+            with closing(con.cursor()) as cur:
+                cur.execute("SELECT * FROM articles WHERE title = ?", (title,))
 
-        if record is None:
-            raise NotFound
+                record = cur.fetchone()
 
-        article = cls(**record)  # Row can be unpacked as dict
-        con.close()
+                if record is None:
+                    raise NotFound
 
-        return article
+                article = cls(**record)  # Row can be unpacked as dict
+
+                return article
 
     @classmethod
     def list(cls) -> List["Article"]:
-        con = sqlite3.connect(os.getenv("DATABASE_NAME", "database.db"))
-        con.row_factory = sqlite3.Row
+        with closing(sqlite3.connect(
+                os.getenv("DATABASE_NAME", "database.db"))) as con:
 
-        cur = con.cursor()
-        cur.execute("SELECT * FROM articles")
+            con.row_factory = sqlite3.Row
 
-        records = cur.fetchall()
-        articles = [cls(**record) for record in records]
-        con.close()
+            with closing(con.cursor) as cur:
+                cur.execute("SELECT * FROM articles")
 
-        return articles
+                records = cur.fetchall()
+                articles = [cls(**record) for record in records]
+
+                return articles
 
     def save(self) -> "Article":
-        with sqlite3.connect(os.getenv("DATABASE_NAME", "database.db")) as con:
-            cur = con.cursor()
-            cur.execute(
-                "INSERT INTO articles (id, author, title, content) "
-                "VALUES(?, ?, ?, ?)",
-                (self.id, self.author, self.title, self.content)
-            )
-            con.commit()
+        with closing(sqlite3.connect(
+                os.getenv("DATABASE_NAME", "database.db"))) as con:
+            with closing(con.cursor()) as cur:
+                cur.execute(
+                    "INSERT INTO articles (id, author, title, content) "
+                    "VALUES(?, ?, ?, ?)",
+                    (self.id, self.author, self.title, self.content)
+                )
+                con.commit()
 
         return self
 
     @classmethod
     def create_table(cls, database_name="database.db"):
-        conn = sqlite3.connect(database_name)
-
-        conn.execute(
-            "CREATE TABLE IF NOT EXISTS articles "
-            "(id TEXT, author TEXT, title TEXT, content TEXT)"
-        )
-        conn.close()
+        with closing(sqlite3.connect(database_name)) as conn:
+            conn.execute(
+                "CREATE TABLE IF NOT EXISTS articles "
+                "(id TEXT, author TEXT, title TEXT, content TEXT)"
+            )
