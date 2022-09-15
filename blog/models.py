@@ -62,7 +62,7 @@ class Article(BaseModel):
 
             con.row_factory = sqlite3.Row
 
-            with closing(con.cursor) as cur:
+            with closing(con.cursor()) as cur:
                 cur.execute("SELECT * FROM articles")
 
                 records = cur.fetchall()
