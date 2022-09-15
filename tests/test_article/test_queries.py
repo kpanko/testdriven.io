@@ -1,5 +1,5 @@
 from blog.models import Article
-from blog.queries import ListArticlesQuery
+from blog.queries import ListArticlesQuery, GetArticleByIDQuery
 
 
 def test_list_articles():
@@ -23,3 +23,21 @@ def test_list_articles():
 
     assert len(query.execute()) == 2
 
+
+def test_get_article_by_id():
+    """
+    GIVEN ID of article stored in the database
+    WHEN the execute method is called on GetArticleByIDQuery with an ID
+    THEN it should return the article with the same ID
+    """
+    article = Article(
+        author="jane@doe.com",
+        title="New Article",
+        content="Super extra awesome article"
+    ).save()
+
+    query = GetArticleByIDQuery(
+        id=article.id
+    )
+
+    assert query.execute().id == article.id
