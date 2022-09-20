@@ -19,32 +19,25 @@ class Article(BaseModel):
 
     @classmethod
     def get_by_id(cls, article_id: str):
-        with closing(sqlite3.connect(
-                os.getenv("DATABASE_NAME", "database.db"))) as con:
-
-            con.row_factory = sqlite3.Row
-
-            with closing(con.cursor()) as cur:
-                cur.execute("SELECT * FROM articles WHERE id=?", (article_id,))
-
-                record = cur.fetchone()
-
-                if record is None:
-                    raise NotFound
-
-                article = cls(**record)  # Row can be unpacked as dict
-
-                return article
+        return cls._get_by_attribute(
+            "SELECT * FROM articles WHERE id=?",
+            (article_id,))
 
     @classmethod
     def get_by_title(cls, title: str):
+        return cls._get_by_attribute(
+            "SELECT * FROM articles WHERE title = ?",
+            (title,))
+
+    @classmethod
+    def _get_by_attribute(cls, sql_query: str, sql_query_values: tuple):
         with closing(sqlite3.connect(
                 os.getenv("DATABASE_NAME", "database.db"))) as con:
 
             con.row_factory = sqlite3.Row
 
             with closing(con.cursor()) as cur:
-                cur.execute("SELECT * FROM articles WHERE title = ?", (title,))
+                cur.execute(sql_query, sql_query_values)
 
                 record = cur.fetchone()
 
